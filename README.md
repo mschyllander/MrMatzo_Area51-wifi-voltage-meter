@@ -1,4 +1,5 @@
-# Area-51 WiFi Voltage Meter + WebScope + UART Protocol Lab by matsarlemark@gmail.com / aka / Mats Schyllander 2026
+# Area-51 WiFi Voltage Meter+WebScope+UART ProtocolLab 2026
+by matsarlemark@gmail.com / Mats Schyllander
 
 ## Overview
 An embedded ESP8266 project combining real-time voltage measurement, a browser-based oscilloscope, and a UART-based protocol lab for command testing and hardware control.
