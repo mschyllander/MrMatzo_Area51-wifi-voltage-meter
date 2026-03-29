@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR MATZOS - CIRCUIT LAB</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="page">
+<header class="topbar">
+  <div>
+    <div class="brand">MR MATZOS - CIRCUIT LAB</div>
+    <div class="subline">
+      <span>MODE: <b id="modeLbl">STA</b></span>
+      <span>IP: <b id="ipLbl">-</b></span>
+      <span>RSSI: <b id="rssiLbl">-</b></span>
+      <span>STATUS: <b id="statusLbl">READY</b></span>
+    </div>
+  </div>
+  <div class="navPack">
+    <a href="/scope.html" class="navBtn topBtn">OSCILLOSCOPE</a>
+    <a href="/protocol.html" class="navBtn topBtn">PROTOCOL LAB</a>
+  </div>
+</header>
+
+<main class="grid">
+  <div class="leftCol">
+    <section class="card">
+      <h3>VOLTMETER</h3>
+      <div class="bigReading"><span id="voltageLbl">0.000</span> V</div>
+      <div class="meterMeta">
+        <span>ADC: <b id="adcLbl">0 / 1023</b></span>
+        <span>mV: <b id="mvLbl">0</b></span>
+        <span>ZONE: <b id="zoneLbl">-</b></span>
+      </div>
+      <div class="rule"></div>
+      <label class="label">BATTERY PRESET</label>
+      <select id="batterySel" class="field">
+        <option value="aa">AA (alk)</option>
+        <option value="aaa">AAA (alk)</option>
+        <option value="coin3v">CR2032 / 3V coin</option>
+        <option value="nimh1v2">NiMH 1.2V</option>
+        <option value="liion1s">Li-Ion 3V window</option>
+      </select>
+      <div class="hintBox" id="batteryHint">AA/AAA alkaline preset active.</div>
+    </section>
+
+    <section class="card vectorCard">
+      <div class="vectorControls">
+        <button id="vecPrev" class="iconBtn" type="button">&#9664;</button>
+        <div class="vectorModeLbl" id="vectorModeLbl">TRIANGLE RIG</div>
+        <button id="vecNext" class="iconBtn" type="button">&#9654;</button>
+      </div>
+      <div class="scanlineOverlay crtNoise">
+        <canvas id="vectorCanvas" width="520" height="220"></canvas>
+      </div>
+      <div class="vectorMeta">
+        <span>MODE: wireframe triangle rig</span>
+        <span>STYLE: green vector + scanlines</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="rightCol">
+    <section class="card">
+      <h3>ELECTRONICS CALCULATOR</h3>
+
+      <div class="calcPanel">
+        <div class="calcTitle">OHM / POWER</div>
+        <div class="row" style="margin-bottom:8px">
+          <select id="lawMode" class="field grow">
+            <option value="voltage_from_ir">U = I × R</option>
+            <option value="current_from_ur">I = U / R</option>
+            <option value="res_from_ui">R = U / I</option>
+            <option value="power_from_ui">P = U × I</option>
+            <option value="current_from_pu">I = P / U</option>
+            <option value="voltage_from_pi">U = P / I</option>
+          </select>
+        </div>
+        <div class="helper" id="lawHint">Mata in två värden.</div>
+        <div class="calcGrid" style="margin-top:8px">
+          <div>
+            <label class="label" id="lawALbl">INPUT A</label>
+            <input id="lawA" class="field" type="number" step="any" placeholder="Value A">
+          </div>
+          <div>
+            <label class="label" id="lawBLbl">INPUT B</label>
+            <input id="lawB" class="field" type="number" step="any" placeholder="Value B">
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnCalcLaw" class="btn" type="button">CALCULATE</button>
+          <button id="btnCalcLawClear" class="btn ghost" type="button">CLEAR</button>
+        </div>
+        <div class="resultBox">
+          <div class="resultLabel">RESULT</div>
+          <div class="resultValue" id="lawOut">Enter the two required values.</div>
+        </div>
+      </div>
+
+      <div class="calcPanel" style="margin-top:8px">
+        <div class="calcTitle">RESISTOR TOTAL</div>
+        <div class="double">
+          <select id="resMode" class="field">
+            <option value="parallel">Parallel</option>
+            <option value="series">Series</option>
+          </select>
+          <button id="btnAddResistor" class="btn" type="button">ADD</button>
+        </div>
+        <div id="resistorList" class="resistorList">
+          <div class="resRow">
+            <input class="field resInput" type="number" step="any" placeholder="R1 Ohm">
+            <button class="btn ghost resRemove" type="button">x</button>
+          </div>
+          <div class="resRow">
+            <input class="field resInput" type="number" step="any" placeholder="R2 Ohm">
+            <button class="btn ghost resRemove" type="button">x</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnCalcResistors" class="btn" type="button">CALCULATE</button>
+          <button id="btnCalcResistorsClear" class="btn ghost" type="button">CLEAR</button>
+        </div>
+        <div class="resultBox">
+          <div class="resultLabel">RESULT</div>
+          <div class="resultValue" id="resOut">Choose series or parallel, then enter resistor values.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

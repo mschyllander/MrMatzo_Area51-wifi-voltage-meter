@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR MATZOS - OSCILLOSCOPE</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="page">
+<header class="topbar">
+  <div>
+    <div class="brand">MR MATZOS - OSCILLOSCOPE</div>
+    <div class="subline">
+      <span>STATUS: <b id="statusLbl">READY</b></span>
+      <span>SCOPE: <b id="scopeStateLbl">OFF</b></span>
+      <span>PWM: <b id="pwmStateLbl">OFF</b></span>
+      <span>FS: <b id="fsLbl">200 Hz</b></span>
+      <span>V/DIV: <b id="vDivLblTop">0.5 V/div</b></span>
+      <span>TIME/DIV: <b id="timeDivLblTop">20 ms/div</b></span>
+      <span>TRIGGER: <b id="trigInfoLbl">OFF</b></span>
+    </div>
+  </div>
+  <div class="navPack">
+    <a href="/" class="navBtn topBtn">DASHBOARD</a>
+    <a href="/protocol.html" class="protocolBtn topBtn">PROTOCOL LAB</a>
+  </div>
+</header>
+
+<section class="card">
+  <h3>OSCILLOSCOPE</h3>
+  <div class="scopeToolbar">
+    <button id="btnScope" class="btn" type="button">SCOPE</button>
+    <button id="btnFreeze" class="btn" type="button">FREEZE</button>
+    <button id="btnAuto" class="btn active" type="button">AUTO</button>
+    <button id="btnTrig" class="btn" type="button">TRIG</button>
+    <button id="btnTrigEdge" class="btn ghost" type="button">EDGE ↑</button>
+    <button id="btnRec" class="btn" type="button">REC</button>
+    <button id="btnCsv" class="btn ghost" type="button">CSV</button>
+    <button id="btnZoomOut" class="btn ghost" type="button">ZOOM-</button>
+    <button id="btnZoomIn" class="btn ghost" type="button">ZOOM+</button>
+  </div>
+
+  <div class="scopeControls">
+    <div>
+      <label class="label">TIME/DIV</label>
+      <select id="timeDivSel" class="field">
+        <option value="10">10 ms/div</option>
+        <option value="20" selected>20 ms/div</option>
+        <option value="50">50 ms/div</option>
+        <option value="100">100 ms/div</option>
+      </select>
+    </div>
+    <div>
+      <label class="label">V/DIV</label>
+      <select id="vDivSel" class="field">
+        <option value="0.5" selected>0.5 V/div</option>
+        <option value="1">1.0 V/div</option>
+        <option value="2">2.0 V/div</option>
+        <option value="3">3.0 V/div</option>
+      </select>
+    </div>
+    <div class="grow">
+      <label class="label">TRIG LVL</label>
+      <div class="row">
+        <input id="trigSlider" type="range" min="0" max="100" value="50" class="slider grow">
+        <span class="smallValue" id="trigModeLbl">AUTO</span>
+      </div>
+    </div>
+    <div>
+      <label class="label">FS (50-4000 Hz)</label>
+      <div class="row">
+        <input id="scopeFsInput" class="field smallFieldWide" value="200" inputmode="numeric">
+        <button id="btnScopeFsSet" class="btn" type="button">SET</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scopeMeta" id="scopeMetaLbl">samples:0 zoom:1.0 dt:0us rec:0</div>
+  <canvas id="scopeCanvas" width="900" height="250"></canvas>
+</section>
+
+<section class="card" style="margin-top:8px">
+  <h3>PWM CONTROL</h3>
+  <div class="row">
+    <input id="pwmFreqInput" class="field grow" value="200" inputmode="numeric">
+    <button id="btnPwmFreqSet" class="btn" type="button">SET FREQ</button>
+    <button id="btnPwmToggle" class="btn" type="button">PWM</button>
+  </div>
+  <div class="pwmMeta" style="margin-top:6px">
+    <span>FREQ: <b id="pwmFreqLbl">200 Hz</b></span>
+    <span>DUTY: <b id="pwmDutyLbl">50 %</b></span>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input id="dutySlider" type="range" min="0" max="100" value="50" class="slider grow">
+    <span class="smallValue" id="dutyPreview">50%</span>
+    <button id="btnDutySend" class="btn" type="button">SEND</button>
+  </div>
+</section>
+
+<script src="/scope.js"></script>
+</body>
+</html>
