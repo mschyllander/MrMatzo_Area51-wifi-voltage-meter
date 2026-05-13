@@ -1,0 +1,27 @@
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# SQLite / runtime data
+*.db
+backend/data/*.db
+
+# Backups
+*.bak
+
+# Logs
+*.log
+
+# Environment/secrets
+.env
+*.env
+
+# PlatformIO / Arduino build
+.pio/
+.vscode/.browse.c_cpp.db*
