@@ -74,8 +74,6 @@ Main controller responsible for:
 Recommended boards:
 
 * NodeMCU ESP8266
-* Wemos D1 Mini
-
 ---
 
 ### ESP8266 Slave
