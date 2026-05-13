@@ -1,0 +1,487 @@
+##### Mr Matzos voltage/protocol lab 2026
+
+from typing import Optional
+from contextlib import asynccontextmanager
+import time
+import json
+import os
+import sqlite3
+
+from fastapi import FastAPI, status, HTTPException
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+
+DATA_FILE = "data.json"
+DB_FILE = "/app/data/database.db"
+DEVICE_STALE_TIMEOUT_SECONDS = 5.0
+MAX_MEASUREMENTS = 180
+ENABLE_FILE_PERSISTENCE = False
+CLEAR_DB_ON_START = False
+
+
+
+def get_db_connection():                    ## skapar funktionen som öppnar kontakt med db. Finns inte .db skapas den automatiskt
+    conn = sqlite3.connect(DB_FILE)         ## conn är ett connection-objekt - min "kanal" till databasen
+    conn.row_factory = sqlite3.Row          ##  ## denna rad returnerar värde SQLLite rader som tuplets ex. (1, "Todo1") men med sqlite.Row kan man göra row["id], row["title"]
+    return conn                             ## Returnerar connection-objektet så andra funktioner kan använda det
+
+
+class TodoCreate(BaseModel):
+    title: str
+
+
+class Todo(BaseModel):
+    id: int
+    title: str
+
+
+class MeasurementCreate(BaseModel):
+    device_id: str
+    ts_ms: int
+    adc: int
+    mv: int
+    signal_type: Optional[str] = "Unknown"
+    frequency_hz: Optional[int] = 0
+    duty_percent: Optional[int] = 0
+    amplitude_mv: Optional[int] = 0
+    dc_offset_mv: Optional[int] = 0
+
+
+class MeasurementPoint(BaseModel):
+    id: Optional[int] = None
+    device_id: str
+    ts_ms: int
+    adc: int
+    mv: int
+    signal_type: str = "Unknown"
+    frequency_hz: int = 0
+    duty_percent: int = 0
+    amplitude_mv: int = 0
+    dc_offset_mv: int = 0
+
+
+# RAM buffers for fast dashboard updates
+todos: list[Todo] = []
+measurements: list[MeasurementPoint] = []
+
+latest_state = {
+    "connected": False,
+    "device_id": None,
+    "last_seen_unix": None,
+    "adc": 0,
+    "mv": 0,
+    "measurement_count": 0,
+    "signal_type": "N/A",
+    "frequency_hz": 0,
+    "duty_percent": 0,
+    "amplitude_mv": 0,
+    "dc_offset_mv": 0,
+}
+
+
+def clear_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DROP TABLE IF EXISTS todos")
+    cursor.execute("DROP TABLE IF EXISTS measurements")
+
+    conn.commit()
+    conn.close()
+
+
+def init_db():
+    if CLEAR_DB_ON_START:
+        clear_db()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        device_id TEXT NOT NULL,
+        ts_ms INTEGER NOT NULL,
+        adc INTEGER NOT NULL,
+        mv INTEGER NOT NULL,
+        signal_type TEXT,
+        frequency_hz INTEGER,
+        duty_percent INTEGER,
+        amplitude_mv INTEGER,
+        dc_offset_mv INTEGER
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def db_trim_measurements(max_rows: int = 5000):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) AS count FROM measurements")
+    row = cursor.fetchone()
+    total_rows = row["count"] if row else 0
+
+    if total_rows > max_rows:
+        cursor.execute("""
+        DELETE FROM measurements
+        WHERE id NOT IN (
+            SELECT id
+            FROM measurements
+            ORDER BY ts_ms DESC
+            LIMIT ?
+        )
+        """, (max_rows,))
+        conn.commit()
+
+    conn.close()
+
+
+def db_get_todos():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, title FROM todos ORDER BY id ASC")
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [{"id": row["id"], "title": row["title"]} for row in rows]
+
+
+def db_get_todo(todo_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, title FROM todos WHERE id = ?", (todo_id,))
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {"id": row["id"], "title": row["title"]}
+
+
+def db_create_todo(title: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("INSERT INTO todos (title) VALUES (?)", (title,))
+    conn.commit()
+
+    new_id = cursor.lastrowid
+    conn.close()
+
+    return {"id": new_id, "title": title}
+
+
+def db_create_measurement(measurement: MeasurementPoint):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    INSERT INTO measurements (
+        device_id,
+        ts_ms,
+        adc,
+        mv,
+        signal_type,
+        frequency_hz,
+        duty_percent,
+        amplitude_mv,
+        dc_offset_mv
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        measurement.device_id,
+        measurement.ts_ms,
+        measurement.adc,
+        measurement.mv,
+        measurement.signal_type,
+        measurement.frequency_hz,
+        measurement.duty_percent,
+        measurement.amplitude_mv,
+        measurement.dc_offset_mv
+    ))
+
+    conn.commit()
+    new_id = cursor.lastrowid
+    conn.close()
+    return new_id
+
+def db_get_measurements(limit: Optional[int] = None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if limit is None:
+        cursor.execute("""
+        SELECT *
+        FROM measurements
+        ORDER BY ts_ms ASC
+        """)
+    else:
+        cursor.execute("""
+        SELECT *
+        FROM measurements
+        ORDER BY ts_ms DESC
+        LIMIT ?
+        """, (limit,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = [
+        {
+            "id": row["id"],
+            "device_id": row["device_id"],
+            "ts_ms": row["ts_ms"],
+            "adc": row["adc"],
+            "mv": row["mv"],
+            "signal_type": row["signal_type"] or "Unknown",
+            "frequency_hz": row["frequency_hz"] or 0,
+            "duty_percent": row["duty_percent"] or 0,
+            "amplitude_mv": row["amplitude_mv"] or 0,
+            "dc_offset_mv": row["dc_offset_mv"] or 0,
+        }
+        for row in rows
+    ]
+
+    if limit is not None:
+        result.reverse()
+
+    return result
+
+
+def db_get_measurement(measurement_id: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT *
+    FROM measurements
+    WHERE id = ?
+    """, (measurement_id,))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "id": row["id"],
+        "device_id": row["device_id"],
+        "ts_ms": row["ts_ms"],
+        "adc": row["adc"],
+        "mv": row["mv"],
+        "signal_type": row["signal_type"] or "Unknown",
+        "frequency_hz": row["frequency_hz"] or 0,
+        "duty_percent": row["duty_percent"] or 0,
+        "amplitude_mv": row["amplitude_mv"] or 0,
+        "dc_offset_mv": row["dc_offset_mv"] or 0,
+    }
+
+
+### DB funktion för att ta bort saker ifrån todos
+def db_delete_todo(todo_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM todos WHERE id = ?", (todo_id,))
+    conn.commit()
+
+    deleted_rows = cursor.rowcount
+    conn.close()
+
+    return deleted_rows > 0
+
+
+def trim_buffers() -> None:
+    measurements[:] = measurements[-MAX_MEASUREMENTS:]
+
+
+def refresh_connection_state() -> None:
+    last_seen = latest_state.get("last_seen_unix")
+    if not last_seen:
+        latest_state["connected"] = False
+        return
+
+    latest_state["connected"] = (
+        time.time() - float(last_seen)
+    ) <= DEVICE_STALE_TIMEOUT_SECONDS
+
+
+def save_data() -> None:
+    if not ENABLE_FILE_PERSISTENCE:
+        return
+
+    data = {
+        "todos": [t.model_dump() for t in todos],
+        "measurements": [m.model_dump() for m in measurements],
+        "latest_state": latest_state,
+    }
+
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def load_data() -> None:
+    global todos, measurements
+
+    if not ENABLE_FILE_PERSISTENCE or not os.path.exists(DATA_FILE):
+        todos = []
+        measurements = []
+        return
+
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    todos = [Todo(**t) for t in data.get("todos", [])]
+    measurements = [MeasurementPoint(**m) for m in data.get("measurements", [])]
+
+    trim_buffers()
+    latest_state.update(data.get("latest_state", {}))
+    latest_state["measurement_count"] = len(measurements)
+    refresh_connection_state()
+
+
+load_data()
+
+
+@asynccontextmanager
+async def lifespan(_: "FastAPI"):
+    init_db()
+    yield
+
+
+app = FastAPI(docs_url="/swagger", lifespan=lifespan)
+
+
+@app.get("/todos")
+def get_todos_list():
+    return db_get_todos()
+
+
+@app.get("/todos/{todo_id}")
+def get_todo(todo_id: int):
+    todo = db_get_todo(todo_id)
+    if todo is None:
+        raise HTTPException(status_code=404, detail="Todo not found.")
+    return todo
+
+
+
+### Endpoint för API att ta bort saker från todo
+
+@app.post("/todos", status_code=status.HTTP_201_CREATED)
+async def create_todo(new_todo: TodoCreate):
+    todo = db_create_todo(new_todo.title)
+    return {"message": "Todo added!", "todo": todo}
+
+@app.delete("/todos/{todo_id}")
+def delete_ttodo(todo_id: int):
+    success = db_delete_todo(todo_id)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    return {"message": f"todo {todo_id} deleted"}
+
+
+@app.post("/measurements", status_code=status.HTTP_201_CREATED)
+async def create_measurement(point: MeasurementCreate):
+    measurement = MeasurementPoint(
+        device_id=point.device_id,
+        ts_ms=point.ts_ms,
+        adc=point.adc,
+        mv=point.mv,
+        signal_type=point.signal_type or "Unknown",
+        frequency_hz=int(point.frequency_hz or 0),
+        duty_percent=int(point.duty_percent or 0),
+        amplitude_mv=int(point.amplitude_mv or 0),
+        dc_offset_mv=int(point.dc_offset_mv or 0),
+    )
+
+    # Fast RAM buffer for dashboard state
+    measurements.append(measurement)
+    trim_buffers()
+
+    # Persistent SQL storage
+    db_create_measurement(measurement)
+    db_trim_measurements(5000)
+
+    latest_state["connected"] = True
+    latest_state["device_id"] = measurement.device_id
+    latest_state["last_seen_unix"] = int(time.time())
+    latest_state["adc"] = measurement.adc
+    latest_state["mv"] = measurement.mv
+    latest_state["measurement_count"] = len(measurements)
+    latest_state["signal_type"] = measurement.signal_type
+    latest_state["frequency_hz"] = measurement.frequency_hz
+    latest_state["duty_percent"] = measurement.duty_percent
+    latest_state["amplitude_mv"] = measurement.amplitude_mv
+    latest_state["dc_offset_mv"] = measurement.dc_offset_mv
+
+    save_data()
+
+    return {"message": "Measurement received", "point": measurement}
+
+
+@app.get("/measurements")
+def get_measurements(limit: Optional[int] = None):
+    return db_get_measurements(limit)
+
+
+@app.get("/measurements/{measurement_id}")
+def get_measurement(measurement_id: str):
+    measurement = db_get_measurement(measurement_id)
+    if measurement is None:
+        raise HTTPException(status_code=404, detail="Measurement not found.")
+    return measurement
+
+
+@app.get("/state")
+def get_state():
+    latest_state["measurement_count"] = len(measurements)
+    refresh_connection_state()
+    return latest_state
+
+
+@app.post("/admin/clear-db")
+def admin_clear_db():
+    clear_db()
+    init_db()
+
+    measurements.clear()
+    todos.clear()
+
+    latest_state["connected"] = False
+    latest_state["device_id"] = None
+    latest_state["last_seen_unix"] = None
+    latest_state["adc"] = 0
+    latest_state["mv"] = 0
+    latest_state["measurement_count"] = 0
+    latest_state["signal_type"] = "N/A"
+    latest_state["frequency_hz"] = 0
+    latest_state["duty_percent"] = 0
+    latest_state["amplitude_mv"] = 0
+    latest_state["dc_offset_mv"] = 0
+
+    return {"message": "Database cleared and RAM buffers reset."}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

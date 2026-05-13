@@ -1,0 +1,28 @@
+
+/* =========================================================
+   MR MATZOS Radar Core Addon
+   Scoped only to #radarCoreAddon.
+   Does NOT override existing calculator design.
+   ========================================================= */
+
+#radarCoreAddon{margin-top:12px}
+#radarCoreAddon .radarCoreHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+#radarCoreAddon .radarCoreLayout{display:grid;grid-template-columns:410px minmax(0,1fr);gap:12px}
+#radarCoreAddon .radarCoreTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+#radarCoreAddon .radarCoreTab{min-height:32px;padding:6px 8px;font-size:10px}
+#radarCoreAddon .radarCoreTab.active{background:rgba(124,255,206,.16);color:#f7fff8;border-color:rgba(127,255,195,.52);box-shadow:0 0 12px rgba(127,255,195,.12)}
+#radarCoreAddon .radarBlock{display:none}
+#radarCoreAddon .radarBlock.active{display:block}
+#radarCoreAddon .radarFormula{display:grid;gap:4px;margin:8px 0;padding:9px 10px;border:1px solid rgba(255,235,140,.18);border-radius:12px;background:rgba(0,0,0,.18)}
+#radarCoreAddon .radarFormula code{color:#fff3d6;font-size:11px;white-space:normal}
+#radarCoreAddon .radarVisTitle{display:flex;justify-content:space-between;gap:12px;align-items:center}
+#radarCoreCanvas{width:100%;height:360px;display:block;border:1px solid rgba(124,255,206,.24);border-radius:16px;background:radial-gradient(circle at 50% 50%,rgba(127,255,195,.055),transparent 45%),#020503}
+#radarCoreAddon .radarLegend{display:flex;flex-wrap:wrap;gap:10px;margin-top:7px;color:#bdf8d4;font-size:10px}
+#radarCoreAddon .legendLine{display:inline-flex;align-items:center;gap:5px}
+#radarCoreAddon .legendLine i{display:inline-block;width:18px;height:3px;border-radius:3px}
+#radarCoreAddon .lBlue{background:#55aaff}.lGold{background:#d49b46}.lGreen{background:#7fffc3}.lRed{background:#ff6b6b}
+#radarCoreAddon .radarNote{font-size:11px;color:#bdf8d4;line-height:1.45}
+@media(max-width:1050px){
+  #radarCoreAddon .radarCoreLayout{grid-template-columns:1fr}
+  #radarCoreCanvas{height:300px}
+}

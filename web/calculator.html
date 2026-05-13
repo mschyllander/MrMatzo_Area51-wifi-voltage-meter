@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR MATZOS - CALCULATOR</title>
+<link rel="stylesheet" href="/style.css?v=rf-toolbox-amfm-v1">
+<link rel="icon" href="/favicon.ico">
+</head>
+<body>
+<div class="page calcPage">
+<header class="topbar">
+  <div>
+    <div class="brand">MR MATZOS - CALCULATOR</div>
+    <div class="subline">Engineering formulas, visualizations and measurement-data import.</div>
+  </div>
+  <div class="navPack">
+    <a href="/" class="navBtn topBtn">DASHBOARD</a>
+  </div>
+</header>
+
+<section class="card">
+  <div class="calcTabs">
+    <button class="calcTab active" data-tab="electrical">ELECTRICAL / VOLTMETER</button>
+    <button class="calcTab" data-tab="rf">RF / ANTENNA</button>
+    <button class="calcTab" data-tab="modulation">RF TOOLBOX / AM-FM</button>
+    <button class="calcTab" data-tab="sensors">SENSORS / DISTANCE</button>
+    <button class="calcTab" data-tab="pointcloud">3D / RADAR / LIDAR</button>
+  </div>
+
+  <div class="calcLayout">
+    <div class="calcLeft">
+      <div class="calcPanel">
+        <label class="label">FUNCTION</label>
+        <select id="calcFunction" class="field"></select>
+      </div>
+
+      <div id="inputPanel" class="calcPanel"></div>
+
+      <div class="row top8">
+        <button id="btnCalc" class="btn" type="button">CALCULATE</button>
+        <button id="btnClearCalc" class="btn ghost" type="button">CLEAR</button>
+      </div>
+
+      <div class="resultBox">
+        <div class="resultLabel">RESULT</div>
+        <div id="calcResult" class="resultValue">Choose a function and enter values.</div>
+      </div>
+    </div>
+
+    <div class="calcRight">
+      <div class="calcPanel">
+        <div class="calcTitle">MATHEMATICS USED</div>
+        <pre id="formulaBox" class="formulaBox"></pre>
+      </div>
+
+      <div class="calcPanel">
+        <div class="calcTitle">VISUALIZATION</div>
+        <canvas id="calcCanvas" width="900" height="420"></canvas>
+        <div id="visualHint" class="helper top8">Visualization updates after calculation.</div>
+      </div>
+
+      <div class="calcPanel">
+        <div class="calcTitle">DATA / LOG IMPORT</div>
+        <input id="dataFile" class="field" type="file" accept=".csv,.tsv,.txt,.log,.json">
+        <div class="row top8">
+          <button id="btnLoadData" class="btn" type="button">LOAD DATA</button>
+          <button id="btnClearData" class="btn ghost" type="button">CLEAR DATA</button>
+        </div>
+        <div id="dataSummary" class="helper top8">Prepared for CSV/TXT/LOG/JSON sensor logs and pointclouds.</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script src="/calculator.js?v=rf-toolbox-amfm-v1"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AREA51 • WiFi Setup</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">AREA51 • WiFi Setup</div>
+      <div class="status"><span>IP: <b id="ip">192.168.4.1</b></span></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3>Konfigurera WiFi</h3>
+      <div class="row">
+        <input id="ssid" placeholder="SSID (2.4 GHz)" />
+        <input id="pass" placeholder="Lösenord" type="password" />
+        <button id="save" class="smallBtn">SAVE</button>
+      </div>
+      <div class="hint" style="margin-top:10px; color:var(--muted); font-size:12px;">
+        När du sparar startar enheten om och försöker ansluta till ditt nät.
+      </div>
+    </div>
+  </div>
+
+<script>
+document.getElementById('save').addEventListener('click', async ()=>{
+  const ssid = document.getElementById('ssid').value.trim();
+  const pass = document.getElementById('pass').value;
+  const fd = new FormData();
+  fd.append('ssid', ssid);
+  fd.append('pass', pass);
+  const r = await fetch('/api/savewifi', {method:'POST', body: fd});
+  alert(await r.text());
+});
+</script>
+</body>
+</html>

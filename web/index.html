@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MR MATZOS - CIRCUIT LAB</title>
+<link rel="stylesheet" href="/style.css?v=full-polish-real-1">
+<link rel="icon" href="/favicon.ico">
+</head>
+<body>
+<div class="page dashPage">
+<header class="topbar dashTop">
+  <div>
+    <div class="brand">MR MATZOS - CIRCUIT LAB</div>
+    <div class="subline">
+      <span>MODE: <b id="modeLbl">STA</b></span>
+      <span>IP: <b id="ipLbl">-</b></span>
+      <span>RSSI: <b id="rssiLbl">-</b></span>
+      <span>STATUS: <b id="statusLbl">READY</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="dashGridClean">
+  <section class="card dashMeter">
+    <h3>VOLTMETER</h3>
+    <div class="bigReading"><span id="voltageLbl">0.000</span> V</div>
+    <div class="meterMeta">
+      <span>ADC: <b id="adcLbl">0 / 1023</b></span>
+      <span>mV: <b id="mvLbl">0</b></span>
+      <span>ZONE: <b id="zoneLbl">-</b></span>
+    </div>
+    <div class="rule"></div>
+    <label class="label">BATTERY PRESET</label>
+    <select id="batterySel" class="field">
+      <option value="aa">AA (alk)</option>
+      <option value="aaa">AAA (alk)</option>
+      <option value="coin3v">CR2032 / 3V coin</option>
+      <option value="nimh1v2">NiMH 1.2V</option>
+      <option value="liion1s">Li-Ion 3V window</option>
+    </select>
+    <div class="hintBox" id="batteryHint">AA/AAA alkaline preset active.</div>
+  </section>
+
+  <section class="card dashVectorCard">
+    <div class="dashVectorLayout">
+      <div class="dashVectorStage">
+        <div class="vectorControls">
+          <button id="vecPrev" class="iconBtn" type="button">&#9664;</button>
+          <div class="vectorModeLbl" id="vectorModeLbl">TRIANGLE RIG</div>
+          <button id="vecNext" class="iconBtn" type="button">&#9654;</button>
+        </div>
+
+        <div class="scanlineOverlay crtNoise">
+          <canvas id="vectorCanvas" width="980" height="330"></canvas>
+        </div>
+
+        <div class="vectorMeta">
+          <span>MODE: wireframe triangle rig</span>
+          <span>STYLE: green vector + scanlines</span>
+        </div>
+      </div>
+
+      <nav class="dashStack" aria-label="Lab navigation">
+        <a href="/scope.html" class="dashButton">OSCILLOSCOPE</a>
+        <a href="/protocol.html" class="dashButton">PROTOCOL LAB</a>
+        <a href="/calculator.html" class="dashButton">CALCULATOR</a>
+      </nav>
+    </div>
+  </section>
+</main>
+</div>
+<script src="/app.js?v=full-polish-real-1"></script>
+</body>
+</html>
