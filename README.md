@@ -1,130 +1,268 @@
-# Area-51 WiFi Voltage Meter+WebScope+UART ProtocolLab 2026
-by matsarlemark@gmail.com / Mats Schyllander
+# Mr Matzos Circuit Lab
 
-## Overview
-An embedded ESP8266 project combining real-time voltage measurement, a browser-based oscilloscope, and a UART-based protocol lab for command testing and hardware control.
-Oscilloscope does not really work well with fast PWM-signals, because of the ESP8266's lower performance. PS: You need TWO MCU's for protocol lab. UI is made thanks to modern AI and a alot of trial and error. #¤%#&"#¤%"#%¤# ! 
+(C)2026 Mats Schyllander
+Email: matsarlemark@gmail.com
 
-## Features
-- Real-time voltage measurement (ADC A0)
-- WebSocket-based oscilloscope (WebScope)
-- UART master/slave communication
-- PWM output control
-- LED control (on/off, blink modes, dimming)
-- OTA firmware updates
-- WiFi STA + fallback AP mode
-- Web UI served via LittleFS
+ESP8266-based WiFi voltage meter, WebScope oscilloscope, ProtocolLab UART terminal, RF toolbox and electronics calculator platform.
+
+A combined embedded systems + web engineering laboratory environment focused on real-time measurements, protocol testing, RF calculations, radar/lidar experimentation and electronics visualization.
 
 ---
-
-## System Architecture
-
-- **Master (ESP8266)**
-  - WiFi + Web server
-  - WebSocket communication
-  - Command parser & router
-  - UI hosting (LittleFS)
-
-- **Slave (ESP8266)**
-  - Executes commands
-  - Controls LEDs and PWM
-  - Handles dimming and blink modes
-
-- **Communication**
-  - UART (text-based commands)
-
----
-
-## Screenshots
 
 ![Dashboard](images/dashboard.png)
-![Scope](images/scope.png)
+
+---
+
+# Features
+
+## Embedded Firmware
+
+* ESP8266 master/slave architecture
+* UART-based ProtocolLab communication
+* Real-time ADC voltage measurements
+* PWM generation and monitoring
+* WebSocket streaming
+* OTA firmware updates
+* Signal visualization
+* Activity LED support
+* Buzzer feedback effects
+
+---
+
+## Web Dashboard
+
+* Live voltage meter
+* Browser-based oscilloscope (WebScope)
+* ProtocolLab UART terminal
+* RF calculator modules
+* Antenna calculations
+* Radar geometry tools
+* Doppler calculations
+* Lidar point-cloud visualization
+* Electrical engineering utilities
+* Signal analysis modules
+
+---
+
+## Backend
+
+* Python FastAPI backend
+* SQLite measurement storage
+* REST API
+* WebSocket communication
+* Dockerized deployment
+* Synology NAS support
+* Nginx reverse proxy
+
+---
+
+# Hardware Requirements
+
+## Main Hardware
+
+### ESP8266 Master
+
+Main controller responsible for:
+
+* WiFi communication
+* ADC measurements
+* WebSocket streaming
+* WebScope oscilloscope
+* ProtocolLab server
+* PWM generation
+
+Recommended boards:
+
+* NodeMCU ESP8266
+* Wemos D1 Mini
+
+---
+
+### ESP8266 Slave
+
+Optional secondary MCU used for:
+
+* UART-controlled outputs
+* Activity LED
+* Buzzer effects
+* Experimental peripherals
+
+---
+
+# Required Components
+
+| Component          | Purpose                     |
+| ------------------ | --------------------------- |
+| ESP8266 Master MCU | Main controller             |
+| ESP8266 Slave MCU  | UART peripheral controller  |
+| LED                | Activity/status indication  |
+| Passive buzzer     | Audio/debug feedback        |
+| Resistors          | LED current limiting        |
+| Jumper wires       | UART and signal connections |
+| USB cable          | Programming and power       |
+
+---
+
+# UART Wiring
+
+Typical UART connection between Master and Slave:
+
+| Master | Slave |
+| ------ | ----- |
+| TX     | RX    |
+| RX     | TX    |
+| GND    | GND   |
+
+---
+
+# Project Structure
+
+```text
+Circuit_Lab/
+├── backend/       FastAPI backend and database handling
+├── firmware/      ESP8266 firmware
+│   ├── master/
+│   └── slave/
+├── images/        Screenshots and documentation images
+├── nginx/         Reverse proxy configuration
+├── web/           Frontend UI and calculator modules
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+# Firmware
+
+## Master Firmware
+
+```text
+firmware/master/master.ino
+```
+
+Handles:
+
+* WiFi
+* ADC measurements
+* WebSocket server
+* WebScope streaming
+* UART ProtocolLab communication
+* PWM control
+
+---
+
+## Slave Firmware
+
+```text
+firmware/slave/slave.ino
+```
+
+Handles:
+
+* UART-controlled peripherals
+* Activity LED
+* Disk buzzer output
+* Auxiliary hardware functions
+
+---
+
+# Backend Stack
+
+* Python FastAPI
+* SQLite3
+* Uvicorn
+* Docker / Docker Compose
+* Nginx reverse proxy
+
+---
+
+# Frontend Stack
+
+* HTML5
+* CSS3
+* JavaScript
+* Chart.js
+* WebSocket API
+
+---
+
+# RF / Radar / Lidar Modules
+
+Circuit Lab includes experimental engineering utilities for:
+
+* Antenna calculations
+* RF propagation
+* Radar geometry
+* Doppler calculations
+* Lidar visualization
+* Point cloud rendering
+* Electrical calculations
+* Signal analysis
+
+---
+
+# Screenshots
+
+## Dashboard
+
+![Dashboard](images/dashboard.png)
+
+---
+
+## Protocol Lab
+
 ![Protocol Lab](images/protocol.png)
 
 ---
 
-## Command List
+## WebScope
 
-### Core
-PING  
-STATUS  
-HELP  
-
-### LED Control
-LED ON / OFF  
-GREEN ON / OFF  
-RED ON / OFF  
-
-### Blink Modes
-BLINK SLOW / MIDDLE / FAST / CRAZY  
-RED BLINK SLOW / MIDDLE / FAST / CRAZY  
-
-### Modes
-MODE LINK  
-
-### Dimming
-DIM 10  
-DIM 20  
-DIM 30  
-DIM 50  
-DIM 100  
-
-### PWM
-PWM 1  
-PWM 0  
-PWF <hz>  
-PWP <percent>  
-
-### Misc
-TEXT <message>  
-PROTO UART  
+![WebScope](images/scope.png)
 
 ---
 
-## File Structure
+## RF Calculator
 
-```
-master/   -> ESP8266 main firmware
-slave/    -> ESP8266 slave firmware
-data/     -> Web UI (LittleFS)
-images/   -> Screenshots
+![RF Calculator](images/rf-calculator.png)
+
+---
+
+## Antenna Visualizer
+
+![Antenna Visualizer](images/antenna-visualizer.png)
+
+---
+
+## Radar / Lidar Modules
+
+![Radar Lidar](images/radar-lidar.png)
+
+---
+
+# Deployment
+
+The backend is designed to run on Synology NAS using Docker Compose and Nginx.
+
+Start services:
+
+```bash
+docker compose up -d
 ```
 
 ---
 
-## Setup Instructions
+# Notes
 
-1. Flash master firmware
-2. Flash slave firmware
-3. Upload /data folder using LittleFS uploader
-4. Connect to device WiFi /  psw: 12345678 / SSID: AREA51 Setup
-5. Open web interface
+The WebScope feature is intended for low-to-medium frequency visualization and is limited by ESP8266 ADC performance and timing constraints.
 
----
+Fast PWM signals may not render accurately due to ESP8266 sampling limitations.
 
-## Design Decisions
+This project is experimental and under continuous development.
 
-- **WebSocket over HTTP polling**
-  - Lower latency
-  - Real-time updates for scope
-
-- **UART communication**
-  - Simple and transparent debugging
-  - Easy extensibility
-
-- **Separation of master/slave**
-  - Clear responsibility split
-  - Scalable architecture
+The RF, radar and lidar modules are intended for educational, visualization and engineering experimentation purposes.
 
 ---
 
-## Known Limitations
+# License
 
-- Oscilloscope is CPU intensive on ESP8266
-- High sampling rates may affect system performance
-- UART speed limited by SoftwareSerial constraints
-
----
-
-## Author
-Mats Schyllander 2026
+MIT License
