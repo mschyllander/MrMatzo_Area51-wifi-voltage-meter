@@ -215,13 +215,13 @@ Circuit Lab includes experimental engineering utilities for:
 
 ## Protocol Lab
 
-![Protocol Lab](images/protocollab.png)
+![Protocol Lab](images/protocol.png)
 
 ---
 
 ## WebScope
 
-![WebScope](images/webscope.png)
+![WebScope](images/scope.png)
 
 ---
 
