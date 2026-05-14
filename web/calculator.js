@@ -1,3 +1,20 @@
+
+(function radar3dInjectedStyle(){
+  const s = document.createElement('style');
+  s.textContent = `
+    .radar3dPlot{
+      width:100%;
+      height:420px;
+      min-height:420px;
+      border:1px solid rgba(124,255,206,.24);
+      border-radius:16px;
+      background:#020503;
+      overflow:hidden;
+    }
+    #calcCanvas[hidden], #radar3dPlot[hidden]{display:none!important}
+  `;
+  document.head.appendChild(s);
+})();
 console.log('MR MATZOS calculator.js loaded: practical toolbox restore v11');
 (function rfToolboxInjectedStyle(){
   const s = document.createElement('style');
@@ -87,13 +104,6 @@ const FUNCTIONS = {
       formula:'Series:\nRtot = R1 + R2 + ... + Rn\n\nParallel:\n1/Rtot = 1/R1 + 1/R2 + ... + 1/Rn',
       custom:'resistors',
       calc:calcResistors
-    },
-    {
-      id:'adc',
-      name:'ADC to voltage',
-      formula:'U = ADC / ADCmax · Uref\n\nUseful for ADC/sensor voltage scaling on any MCU or measurement system.',
-      fields:[['adc','ADC value','', '46'], ['max','ADC max','', '1023'], ['uref','Reference voltage','V', '3.3']],
-      calc:v => ({ text:`U = ${(v.adc/v.max*v.uref).toFixed(6)} V`, y:v.adc/v.max*v.uref, type:'bar', label:'ADC voltage' })
     },
     {
       id:'power',
@@ -335,6 +345,13 @@ const FUNCTIONS = {
   ],
   pointcloud: [
     {
+      id:'radar_surface_3d',
+      name:'3D radar/RF surface visualizer',
+      formula:'3D radar/RF surface visualization:\n\nZ(x,y) represents signal strength/intensity over a scanned area.\n\nModes:\n• Interference field: wave overlap / standing-wave style pattern\n• Antenna lobe: simplified directional main lobe\n• Doppler field: spatial phase / movement field\n\nUse the controls to change resolution, wave density, interference strength, decay and lobe sharpness.',
+      custom:'radarSurface3D',
+      calc:calcRadarSurface3D
+    },
+    {
       id:'radar_core',
       name:'Radar core: geometry, Doppler and range resolution',
       formula:'Radar core calculations:\n\n1) Geometry / pointing\nslant range = √(x² + y² + z²)\nground range = √(x² + y²)\nazimuth = atan2(y, x)\nelevation = atan2(z, ground range)\n\n2) Doppler velocity\nv = fd · c / (2 · f₀) for monostatic radar\n\n3) Range resolution\nΔR = c / (2 · B)',
@@ -374,13 +391,6 @@ const FUNCTIONS = {
         const az=v.az*Math.PI/180, el=v.el*Math.PI/180;
         return { text:`x=${(v.r*Math.cos(el)*Math.cos(az)).toFixed(6)}, y=${(v.r*Math.cos(el)*Math.sin(az)).toFixed(6)}, z=${(v.r*Math.sin(el)).toFixed(6)}`, type:'point', point:[v.r*Math.cos(el)*Math.cos(az),v.r*Math.cos(el)*Math.sin(az)] };
       }
-    },
-    {
-      id:'pointcloud3d_demo',
-      name:'3D point cloud demo',
-      formula:'A point cloud is a set of points:\nP = { (x1,y1,z1), (x2,y2,z2), ... }\n\n3D rotation around Y and X axes:\nx1 = x cos(ay) - z sin(ay)\nz1 = x sin(ay) + z cos(ay)\ny1 = y cos(ax) - z1 sin(ax)\nz2 = y sin(ax) + z1 cos(ax)\n\nPerspective projection:\nscreenX = cx + x1 · scale / (distance - z2)\nscreenY = cy - y1 · scale / (distance - z2)',
-      custom:'pointcloud3dDemo',
-      calc:calcPointCloudDemo
     },
     {
       id:'scan_to_3d_cloud',
@@ -496,6 +506,44 @@ function renderInputs(){
     return;
   }
 
+
+  if(fn.custom === 'radarSurface3D'){
+    q('#inputPanel').innerHTML = `
+      <div class="inputGrid">
+        <div>
+          <label class="label">MODE</label>
+          <select id="radar3dMode" class="field">
+            <option value="interference">Interference field</option>
+            <option value="lobe">Antenna lobe</option>
+            <option value="doppler">Doppler field</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">RESOLUTION</label>
+          <input id="radar3dResolution" class="field" type="number" step="1" min="32" max="120" value="78">
+        </div>
+        <div>
+          <label class="label">WAVE DENSITY</label>
+          <input id="radar3dWave" class="field" type="number" step="0.1" value="2.8">
+        </div>
+        <div>
+          <label class="label">INTERFERENCE</label>
+          <input id="radar3dInterference" class="field" type="number" step="0.05" value="0.35">
+        </div>
+        <div>
+          <label class="label">DECAY / RANGE FALLOFF</label>
+          <input id="radar3dDecay" class="field" type="number" step="0.01" value="0.12">
+        </div>
+        <div>
+          <label class="label">LOBE SHARPNESS</label>
+          <input id="radar3dLobePower" class="field" type="number" step="1" value="8">
+        </div>
+      </div>
+      <div class="helper top8">Use this when you want a true 3D RF/radar surface instead of a normal 2D sketch.</div>
+    `;
+    drawEmpty();
+    return;
+  }
 
   if(fn.custom === 'radarCore'){
     q('#inputPanel').innerHTML = `
@@ -670,6 +718,32 @@ function calcMultiDivider(){
   return { text:`Vout after R${tap} = ${vout.toFixed(6)} V   (Rtotal = ${total.toFixed(6)} Ω)`, y:vout, type:'multiDivider', values:vals, vin, tap, total, lower };
 }
 
+
+function calcRadarSurface3D(){
+  const mode = q('#radar3dMode')?.value || 'interference';
+  const resolution = Math.max(32, Math.min(120, Number(q('#radar3dResolution')?.value || 78)));
+  const wave = Math.max(0.1, Number(q('#radar3dWave')?.value || 2.8));
+  const interference = Math.max(0, Number(q('#radar3dInterference')?.value || 0.35));
+  const decay = Math.max(0, Number(q('#radar3dDecay')?.value || 0.12));
+  const lobePower = Math.max(1, Number(q('#radar3dLobePower')?.value || 8));
+
+  return {
+    text:
+      `3D radar/RF surface\n` +
+      `Mode = ${mode}\n` +
+      `Resolution = ${resolution} × ${resolution}\n` +
+      `Wave density = ${wave}\n` +
+      `Interference = ${interference}\n` +
+      `Decay = ${decay}\n` +
+      `Lobe sharpness = ${lobePower}\n\n` +
+      `Drag to rotate. Scroll to zoom.`,
+    type:'radarSurface3D',
+    mode,
+    values:{resolution,wave,interference,decay,lobePower}
+  };
+}
+
+
 function readValues(fn){
   const out = {};
   for(const [id] of fn.fields || []){
@@ -703,7 +777,122 @@ function drawGrid(ctx,w,h){
   ctx.setLineDash([]);
 }
 
+
+
+function useCanvasVisualization(){
+  const canvas = document.getElementById('calcCanvas');
+  const plot = document.getElementById('radar3dPlot');
+  if(canvas) canvas.hidden = false;
+  if(plot) {
+    plot.hidden = true;
+    if(window.Plotly) {
+      try { Plotly.purge(plot); } catch(e) {}
+    }
+  }
+}
+
+function useRadar3DVisualization(){
+  const canvas = document.getElementById('calcCanvas');
+  const plot = document.getElementById('radar3dPlot');
+  if(canvas) canvas.hidden = true;
+  if(plot) plot.hidden = false;
+}
+
+function drawRadarSurface3D(config='interference') {
+  if(!window.Plotly) {
+    const hint = document.getElementById('visualHint');
+    if(hint) hint.textContent = 'Plotly could not be loaded. 3D radar visualization unavailable.';
+    useCanvasVisualization();
+    drawEmpty();
+    return;
+  }
+
+  const mode = typeof config === 'string' ? config : (config.mode || 'interference');
+  const v = typeof config === 'object' && config.values ? config.values : {};
+  const sizeX = Math.max(32, Math.min(120, Number(v.resolution || 78)));
+  const sizeY = sizeX;
+  const waveDensity = Math.max(0.1, Number(v.wave || 2.8));
+  const interferenceStrength = Math.max(0, Number(v.interference || 0.35));
+  const decay = Math.max(0, Number(v.decay || 0.12));
+  const lobePower = Math.max(1, Number(v.lobePower || 8));
+
+  useRadar3DVisualization();
+
+  const div = document.getElementById('radar3dPlot');
+  if(!div) return;
+
+  const z = [];
+
+  for(let y=0;y<sizeY;y++){
+    const row = [];
+    for(let x=0;x<sizeX;x++){
+      const xx = (x - sizeX/2) / 8;
+      const yy = (y - sizeY/2) / 8;
+      const r = Math.sqrt(xx*xx + yy*yy);
+
+      let value = 0;
+
+      if(mode === 'lobe'){
+        const theta = Math.atan2(yy, xx);
+        const main = Math.pow(Math.max(0, Math.cos(theta)), lobePower);
+        const rangeFalloff = Math.exp(-r * Math.max(0.01, decay + 0.06));
+        value = main * rangeFalloff * 1.7 - 0.25;
+      } else if(mode === 'doppler'){
+        value =
+          Math.sin(xx * waveDensity + r * 1.2) * Math.exp(-r * decay) +
+          Math.cos(yy * 1.1) * interferenceStrength;
+      } else {
+        const wave = Math.sin(r * waveDensity) * Math.exp(-r * decay);
+        const interference = Math.sin(xx * 1.8) * Math.cos(yy * 1.3);
+        value = wave + interference * interferenceStrength;
+      }
+
+      row.push(value);
+    }
+    z.push(row);
+  }
+
+  Plotly.newPlot(div,[{
+    z,
+    type:'surface',
+    colorscale:[
+      [0,'#1b2cff'],
+      [0.35,'#333b7a'],
+      [0.52,'#d9d1bd'],
+      [0.72,'#e9783e'],
+      [1,'#d71927']
+    ],
+    showscale:true,
+    contours:{
+      z:{
+        show:true,
+        usecolormap:true,
+        highlightcolor:'#7fffc3',
+        project:{z:true}
+      }
+    }
+  }],{
+    paper_bgcolor:'#020503',
+    plot_bgcolor:'#020503',
+    scene:{
+      bgcolor:'#020503',
+      xaxis:{color:'#7fffc3',gridcolor:'rgba(127,255,195,0.16)',zerolinecolor:'rgba(255,243,214,0.24)'},
+      yaxis:{color:'#7fffc3',gridcolor:'rgba(127,255,195,0.16)',zerolinecolor:'rgba(255,243,214,0.24)'},
+      zaxis:{color:'#7fffc3',gridcolor:'rgba(127,255,195,0.16)',zerolinecolor:'rgba(255,243,214,0.24)'},
+      camera:{eye:{x:1.45,y:1.35,z:0.85}}
+    },
+    margin:{l:0,r:0,t:0,b:0}
+  },{
+    responsive:true,
+    displaylogo:false
+  });
+
+  const hint = document.getElementById('visualHint');
+  if(hint) hint.textContent = `3D ${mode} surface: drag to rotate, scroll to zoom.`;
+}
+
 function drawEmpty(){
+  useCanvasVisualization();
   const c=q('#calcCanvas'), ctx=c.getContext('2d');
   drawGrid(ctx,c.width,c.height);
   ctx.fillStyle='rgba(214,255,231,.75)';
@@ -1028,6 +1217,8 @@ function drawSamplingAnalyzerScene(ctx,w,h,r){
 
 
 function drawResult(r){
+  if(r && r.type === 'radarSurface3D') { drawRadarSurface3D(r); return; }
+  useCanvasVisualization();
   if(drawRfToolboxScene(r)) { q('#visualHint').textContent = 'RF toolbox visualization generated.'; return; }
 
   const c=q('#calcCanvas'), ctx=c.getContext('2d'), w=c.width, h=c.height;
@@ -2225,98 +2416,4 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   renameTab('sensors', 'SENSORS / SIGNALS');
   renameTab('pointcloud', '3D / RADAR / LIDAR');
-});
-
-
-function drawRadarSurface() {
-
-  const div = document.getElementById('calcCanvas');
-
-  const sizeX = 80;
-  const sizeY = 80;
-
-  const z = [];
-
-  for(let y=0;y<sizeY;y++){
-
-    const row = [];
-
-    for(let x=0;x<sizeX;x++){
-
-      const xx = (x - sizeX/2) / 8;
-      const yy = (y - sizeY/2) / 8;
-
-      const r = Math.sqrt(xx*xx + yy*yy);
-
-      const wave =
-        Math.sin(r * 2.8) *
-        Math.exp(-r * 0.12);
-
-      const interference =
-        Math.sin(xx * 1.8) *
-        Math.cos(yy * 1.3);
-
-      row.push(wave + interference * 0.35);
-    }
-
-    z.push(row);
-  }
-
-  Plotly.newPlot(div,[{
-    z: z,
-    type: 'surface',
-    contours: {
-      z: {
-        show:true,
-        usecolormap:true,
-        highlightcolor:"#7fffc3",
-        project:{z:true}
-      }
-    }
-  }],{
-
-    paper_bgcolor:'#020503',
-    plot_bgcolor:'#020503',
-
-    scene:{
-      bgcolor:'#020503',
-
-      xaxis:{
-        color:'#7fffc3',
-        gridcolor:'rgba(127,255,195,0.15)'
-      },
-
-      yaxis:{
-        color:'#7fffc3',
-        gridcolor:'rgba(127,255,195,0.15)'
-      },
-
-      zaxis:{
-        color:'#7fffc3',
-        gridcolor:'rgba(127,255,195,0.15)'
-      },
-
-      camera:{
-        eye:{x:1.5,y:1.4,z:0.9}
-      }
-    },
-
-    margin:{
-      l:0,
-      r:0,
-      t:0,
-      b:0
-    }
-  },{
-    responsive:true
-  });
-}
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    drawRadarSurface();
-  } catch(e) {
-    console.error('Radar surface render failed', e);
-  }
 });
