@@ -2226,3 +2226,97 @@ document.addEventListener('DOMContentLoaded', () => {
   renameTab('sensors', 'SENSORS / SIGNALS');
   renameTab('pointcloud', '3D / RADAR / LIDAR');
 });
+
+
+function drawRadarSurface() {
+
+  const div = document.getElementById('calcCanvas');
+
+  const sizeX = 80;
+  const sizeY = 80;
+
+  const z = [];
+
+  for(let y=0;y<sizeY;y++){
+
+    const row = [];
+
+    for(let x=0;x<sizeX;x++){
+
+      const xx = (x - sizeX/2) / 8;
+      const yy = (y - sizeY/2) / 8;
+
+      const r = Math.sqrt(xx*xx + yy*yy);
+
+      const wave =
+        Math.sin(r * 2.8) *
+        Math.exp(-r * 0.12);
+
+      const interference =
+        Math.sin(xx * 1.8) *
+        Math.cos(yy * 1.3);
+
+      row.push(wave + interference * 0.35);
+    }
+
+    z.push(row);
+  }
+
+  Plotly.newPlot(div,[{
+    z: z,
+    type: 'surface',
+    contours: {
+      z: {
+        show:true,
+        usecolormap:true,
+        highlightcolor:"#7fffc3",
+        project:{z:true}
+      }
+    }
+  }],{
+
+    paper_bgcolor:'#020503',
+    plot_bgcolor:'#020503',
+
+    scene:{
+      bgcolor:'#020503',
+
+      xaxis:{
+        color:'#7fffc3',
+        gridcolor:'rgba(127,255,195,0.15)'
+      },
+
+      yaxis:{
+        color:'#7fffc3',
+        gridcolor:'rgba(127,255,195,0.15)'
+      },
+
+      zaxis:{
+        color:'#7fffc3',
+        gridcolor:'rgba(127,255,195,0.15)'
+      },
+
+      camera:{
+        eye:{x:1.5,y:1.4,z:0.9}
+      }
+    },
+
+    margin:{
+      l:0,
+      r:0,
+      t:0,
+      b:0
+    }
+  },{
+    responsive:true
+  });
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    drawRadarSurface();
+  } catch(e) {
+    console.error('Radar surface render failed', e);
+  }
+});
