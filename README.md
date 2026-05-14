@@ -227,13 +227,13 @@ Circuit Lab includes experimental engineering utilities for:
 
 ## RF Calculator
 
-![RF Calculator](images/rf_calculator.png)
+![RF Calculator](images/rf-calculator.png)
 
 ---
 
 ## Antenna Visualizer
 
-![Antenna Visualizer](images/antenna_visualizer.png)
+![Antenna Visualizer](images/antenna-visualizer.png)
 
 ---
 
