@@ -20,18 +20,9 @@ Mr Matzos Circuit Lab is a combined embedded systems + web engineering environme
 - WebSocket-based live dashboards
 - Embedded + backend integration
 
-The platform combines:
-
-- Embedded firmware (ESP8266 / ESP32)
-- Python FastAPI backend
-- SQLite database
-- Web-based engineering dashboard
-- Real-time visualization tools
-- RF/radar/lidar experimentation modules
-
 ---
 
-# Main Features
+# Features
 
 ## Embedded Firmware
 
@@ -98,16 +89,12 @@ Interactive 3D rendering using:
 
 ### Spherical Radar / LiDAR Scan
 
-New point-cloud style radar visualization system:
-
 - Spherical coordinate rendering
 - Radar sweep simulation
 - LiDAR-style scan display
 - Engineering-oriented visualization modes
 
 ### RF Toolbox Expansion
-
-Added:
 
 - AM/FM engineering tools
 - RF visualization modules
@@ -116,8 +103,6 @@ Added:
 ---
 
 ## Removed / Cleaned Up
-
-The UI has been restructured to reduce duplicate or unnecessary modules.
 
 Removed:
 
@@ -179,8 +164,6 @@ Optional secondary MCU used for:
 
 # UART Wiring
 
-Typical UART connection between Master and Slave:
-
 | Master | Slave |
 |---|---|
 | TX | RX |
@@ -191,18 +174,86 @@ Typical UART connection between Master and Slave:
 
 # Project Structure
 
-```text
-Circuit_Lab/
-├── backend/           FastAPI backend and database handling
-├── firmware/          ESP8266 firmware
-│   ├── master/
-│   └── slave/
-├── images/            Screenshots and documentation images
-├── nginx/             Reverse proxy configuration
-├── web/               Frontend UI and engineering modules
-├── docker-compose.yml
-└── README.md
+    Circuit_Lab/
+    ├── backend/
+    ├── firmware/
+    │   ├── master/
+    │   └── slave/
+    ├── images/
+    ├── nginx/
+    ├── web/
+    ├── docker-compose.yml
+    └── README.md
 
-# License
+---
 
-MIT License
+# RF / Radar / LiDAR Modules
+
+Circuit Lab includes experimental engineering utilities for:
+
+- Antenna calculations
+- RF propagation
+- Radar geometry
+- Doppler calculations
+- Radar sweep simulation
+- LiDAR visualization
+- Spherical scan rendering
+- Point cloud rendering
+- Signal analysis
+- Electrical calculations
+- RF surface visualization
+
+---
+
+# Screenshots
+
+## Dashboard
+
+![Dashboard](images/dashboard.png)
+
+---
+
+## Protocol Lab
+
+![Protocol Lab](images/protocollab.png)
+
+---
+
+## WebScope
+
+![WebScope](images/webscope.png)
+
+---
+
+## RF Calculator
+
+![RF Calculator](images/rf_calculator.png)
+
+---
+
+## Antenna Visualizer
+
+![Antenna Visualizer](images/antenna_visualizer.png)
+
+---
+
+## 3D Radar / RF Visualization
+
+![3D Radar Visualization](images/radar_3d_surface.png)
+
+---
+
+## Spherical Radar / LiDAR Scan
+
+![Radar Lidar](images/radar_lidar_scan.png)
+
+---
+
+# Deployment
+
+The backend is designed to run on Synology NAS using Docker Compose and Nginx.
+
+Start services:
+
+```bash
+docker compose up -d
